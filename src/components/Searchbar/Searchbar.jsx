@@ -1,36 +1,31 @@
-import React, { Component } from 'react';
+import { useState } from 'react';
 import { FcSearch } from 'react-icons/fc';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'
 import PropTypes from 'prop-types';
 import css from './Searchbar.module.css';
 
-export class Searchbar extends Component {
-    state = {
-        query: '',
-    }
+export function Searchbar({onSubmit}) {
+    const [query, setQuery] = useState('');
 
-    handleSubmit = (e) => {
+
+    const handleSubmit = (e) => {
         e.preventDefault();
-        if (this.state.query.trim() === '') {
+        if (query.trim() === '') {
             toast.error('Please enter your choise');
             return;
           }
-        this.props.onSubmit(this.state.query);
-        this.setState({
-            query: '',
-        })
+        onSubmit(query);
+        setQuery('');
     }
 
-    handleChange = (e) => {
-        this.setState({query: e.target.value})
+    const handleChange = (e) => {
+        setQuery(e.target.value)
     }
 
-
-        render() {
             return (
                 <header className={css.Searchbar}>
-                    <form className={css.SearchForm} onSubmit={this.handleSubmit}>
+                    <form className={css.SearchForm} onSubmit={handleSubmit}>
                         <button type="submit" className={css.SearchFormButton}>
                             <FcSearch/>
                             <span className={css.SearchFormButtonLabel}>Search</span>
@@ -42,13 +37,12 @@ export class Searchbar extends Component {
                             autoComplete="off"
                             autoFocus
                             placeholder="Search images and photos"
-                            onChange={this.handleChange}
+                            onChange={handleChange}
                         />
                     </form>
                 </header>
             );
         }
-    }
 
 Searchbar.propTypes = {
     onSubmit: PropTypes.func.isRequired,

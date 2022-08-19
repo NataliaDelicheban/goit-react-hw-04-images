@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import { useState, useEffect } from "react";
 import getImages from '../service/image-service';
 import { toast, ToastContainer } from 'react-toastify';
 import { Searchbar } from "./Searchbar/Searchbar";
@@ -7,72 +7,55 @@ import { Button } from "./Button/Button";
 import { Loader } from "./Loader/Loader";
 import { Modal } from "./Modal/Modal";
 
-export class App extends Component {
-  state = {
-    query: '',
-    images: [],
-    page: 1,
-    isLoading: false,
-    isOpen: false,
-    largeImageURL: null,
-  }
-
-  async componentDidUpdate(prevProps, prevState) {
-    const { query, page } = this.state;
-    if (prevState.query !== query || prevState.page !== page) {
-      try {
-        this.setState({ isLoading: true });
-        const data = await getImages(query, page);
-        this.setState(prevState => ({
-          images: [...prevState.images, ...data.hits],
-        }));
-
-        if (data.total === 0)
-          toast.warn(
-            `Invalid request. Please try again`
-          );
-      } catch (error) {
-      } finally {
-        this.setState({ isLoading: false });
-      }
-    }
-  }
-
-  toggleModal = () => {
-    this.setState(({ isOpen }) => ({
-      isOpen: !isOpen,
-      largeImageURL: null,
-    }));
-  }
-
-  setlargeImageURL = (largeUrl) => {
-    this.setState({ largeImageURL: largeUrl });
-  }
-
-  onSubmit = query => {
-    this.setState({
-      images: [],
-      page: 1,
-      query,
-    });
-  };
-
-  handleClick = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
-  };
-
-  showBtnLoadMore = () => {
-    const { images, page } = this.state;
-    return (
-      images.length !== 0 &&
-      page * 12 <= images.length
-    );
-  }
+export function App() {
+  const [query, setQuery] = useState('');
+  const [images, setImages] = useState([]);
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [largeImageURL, setLargeImageURL] = useState(null);
   
-  render() {
-    const { images, isLoading, largeImageURL, query } = this.state;
+  useEffect(() => {
+    if (query === '') {
+      return;
+    }
+      setIsLoading(true);
+      getImages(query, page)
+        .then(data => {
+          if (data.total === 0)
+            toast.warn(
+          `Invalid request. Please try again`
+      )
+          setImages(prevState => [...prevState, ...data.hits]);
+        })
+      .catch (error => console.log(error))
+      .finally (() => setIsLoading(false));
+    }, [query, page]);
+
+  const toggleModal = () => {
+    setIsOpen(!isOpen);
+    setLargeImageURL(null);
+  }
+
+  const setlargeImageURL = (largeUrl) => {
+    setLargeImageURL(largeUrl);
+  }
+
+  const onSubmit = query => {
+    setImages([]);
+    setPage(1);
+    setQuery(query);
+  };
+
+  const handleClick = () => {
+    setPage(prevPage => prevPage + 1);
+  };
+
+  const showBtnLoadMore = () => {
+    return images.length !== 0 &&
+      page * 12 <= images.length;
+  };
+  
     return (
       <div
         style={{
@@ -82,17 +65,17 @@ export class App extends Component {
           paddingBottom: '24px',
         }}
       >
-        <Searchbar onSubmit={this.onSubmit} />
+        <Searchbar onSubmit={onSubmit} />
         
         {images.length !== 0 && (
-          <ImageGallery images={images} onClick={this.setlargeImageURL} />)}
+          <ImageGallery images={images} onClick={setlargeImageURL} />)}
                 
-        { this.showBtnLoadMore() && (
-          <Button onClick={this.handleClick} />
+        { showBtnLoadMore() && (
+          <Button onClick={handleClick} />
         )}
 
         {largeImageURL && (
-          <Modal onClose={this.toggleModal}>
+          <Modal onClose={toggleModal}>
             <img src={largeImageURL} alt={query} />
           </Modal>
         )}
@@ -103,4 +86,3 @@ export class App extends Component {
       </div>
     );
   }
-}
